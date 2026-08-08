@@ -4,13 +4,15 @@
       "name": "张总",
       "title": "项目负责人",
       "channels": ["wechat", "email"],
-      "address": "zhang@qq.com"
+      "address": "zhang@qq.com",
+      "wechat_userid": "zhangzong"
     },
     {
       "name": "李经理",
       "title": "部门经理",
       "channels": ["wechat", "email"],
-      "address": "li@qq.com"
+      "address": "li@qq.com",
+      "wechat_userid": "lijingli"
     },
     {
       "name": "王总监",
@@ -24,26 +26,30 @@
       "name": "小王",
       "title": "开发工程师",
       "channels": ["wechat"],
-      "address": ""
+      "address": "",
+      "wechat_userid": "xiaowang"
     },
     {
       "name": "小明",
       "title": "数据分析师",
       "channels": ["wechat", "email"],
-      "address": "xiaoming@qq.com"
+      "address": "xiaoming@qq.com",
+      "wechat_userid": "xiaoming"
     },
     {
       "name": "小红",
       "title": "UI设计师",
       "channels": ["wechat"],
-      "address": ""
+      "address": "",
+      "wechat_userid": "xiaohong"
     },
     {
       "name": "小莲",
       "title": "",
-      "channels": ["email", "phone"],
+      "channels": ["email", "phone", "wechat"],
       "address": "xiaolian@example.com",
-      "phone": "+8600000000000"
+      "phone": "+8600000000000",
+      "wechat_userid": "xiaolian"
     }
   ],
   "agents": [

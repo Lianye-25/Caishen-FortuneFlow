@@ -21,7 +21,9 @@
   "channels": {
     "wechat": {
       "enabled": false,
-      "note": "待实现：企业微信或公众号 API 接入"
+      "corp_id": "wwxxxxxxxxxxxx",
+      "agent_id": 1000002,
+      "secret": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
     }
   }
 }

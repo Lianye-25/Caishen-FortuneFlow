@@ -11,6 +11,8 @@ HANDSFREE 五维中枢 — 消息分发引擎
 import json
 import os
 import smtplib
+import time
+import urllib.request
 from datetime import datetime, timezone, timedelta
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
@@ -268,7 +270,28 @@ def dispatch(parse_result: dict, contacts: dict, config: dict) -> dict:
             if not wechat_config.get("enabled", False):
                 channels_skipped.append({"channel": "wechat", "reason": "未启用"})
                 continue
-            channels_skipped.append({"channel": "wechat", "reason": "微信通道待实现"})
+            if not all([wechat_config.get("corp_id"), wechat_config.get("agent_id"), wechat_config.get("secret")]):
+                channels_skipped.append({"channel": "wechat", "reason": "企业微信配置不完整（需 corp_id / agent_id / secret）"})
+                continue
+            target_userid = target.get("wechat_userid", "")
+            if not target_userid:
+                channels_skipped.append({"channel": "wechat", "reason": f"{target_name} 未填写 wechat_userid"})
+                continue
+
+            try:
+                token = _get_wechat_access_token(
+                    wechat_config["corp_id"],
+                    wechat_config["secret"]
+                )
+                if not token:
+                    channels_skipped.append({"channel": "wechat", "reason": "获取企业微信 access_token 失败"})
+                    continue
+                _send_wechat_message(token, wechat_config["agent_id"], target_userid, direction, content)
+                results.append({"channel": "wechat", "status": "sent", "to": target_userid})
+                channels_dispatched.append("wechat")
+            except Exception as e:
+                results.append({"channel": "wechat", "status": "failed", "to": target_userid, "error": str(e)})
+                channels_skipped.append({"channel": "wechat", "reason": str(e)})
 
     # 汇总状态
     if channels_dispatched:
@@ -373,6 +396,65 @@ def _render_email(to_name: str, direction: str, content: Optional[str]) -> tuple
 </body></html>"""
 
     return subject, body_html
+
+
+# ============================================================
+# 企业微信通道
+# ============================================================
+
+_WECHAT_TOKEN_CACHE = {"token": None, "expires_at": 0}
+
+
+def _get_wechat_access_token(corp_id: str, secret: str) -> Optional[str]:
+    """获取企业微信 access_token，带缓存（提前5分钟刷新）。"""
+    now = time.time()
+    if _WECHAT_TOKEN_CACHE["token"] and now < _WECHAT_TOKEN_CACHE["expires_at"] - 300:
+        return _WECHAT_TOKEN_CACHE["token"]
+
+    url = f"https://qyapi.weixin.qq.com/cgi-bin/gettoken?corpid={corp_id}&corpsecret={secret}"
+    try:
+        req = urllib.request.Request(url)
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            data = json.loads(resp.read().decode("utf-8"))
+        if data.get("errcode") == 0:
+            _WECHAT_TOKEN_CACHE["token"] = data["access_token"]
+            _WECHAT_TOKEN_CACHE["expires_at"] = now + data.get("expires_in", 7200)
+            return _WECHAT_TOKEN_CACHE["token"]
+    except Exception:
+        pass
+    return None
+
+
+def _send_wechat_message(
+    token: str,
+    agent_id: int,
+    to_user: str,
+    direction: str,
+    content: str,
+) -> None:
+    """通过企业微信应用发送 textcard 卡片消息。"""
+    dir_label = {"UP": "汇报", "DOWN": "任务委派"}.get(direction, "通知")
+    desc = (content or "（无内容）")[:500]
+
+    body = {
+        "touser": to_user,
+        "msgtype": "textcard",
+        "agentid": agent_id,
+        "textcard": {
+            "title": f"{dir_label} — HANDSFREE",
+            "description": desc,
+            "url": "",
+            "btntxt": "",
+        },
+    }
+
+    url = f"https://qyapi.weixin.qq.com/cgi-bin/message/send?access_token={token}"
+    data = json.dumps(body, ensure_ascii=False).encode("utf-8")
+    req = urllib.request.Request(url, data=data, headers={"Content-Type": "application/json"})
+    with urllib.request.urlopen(req, timeout=10) as resp:
+        result = json.loads(resp.read().decode("utf-8"))
+    if result.get("errcode") != 0:
+        raise RuntimeError(result.get("errmsg", "企业微信发送失败"))
 
 
 # ============================================================
