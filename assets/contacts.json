@@ -62,6 +62,11 @@
       "name": "文档润色Agent",
       "type": "doc-polish",
       "description": "负责文档格式优化和语言润色"
+    },
+    {
+      "name": "摇钱树Agent",
+      "type": "financial",
+      "description": "AI智能财务助手，详见 https://gitee.com/lianye25/yaoqianshu-skills"
     }
   ]
 }
