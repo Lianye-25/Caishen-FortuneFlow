@@ -1,8 +1,8 @@
-# HANDSFREE 五维中枢
+# 财神上下左右
 
 > 语音驱动的人机协同中枢 — 动嘴不动手
 
-HANDSFREE（**H**ands-free **A**utomated **N**otification & **D**elegation **S**ystem **F**or **R**esponsive **E**xecution）五维中枢，是一套运行在 OpenClaw + 小智机器人上的语音驱动分发系统。将日常管理工作抽象为五个方向，通过自然语言语音指令驱动信息流转。
+财神上下左右，是一套运行在 OpenClaw + 小智机器人上的语音驱动分发系统。将日常管理工作抽象为上下左右四个方向加上中枢决策，通过自然语言语音指令驱动信息流转。
 
 ```
                     ┌──────────────┐
@@ -67,7 +67,7 @@ HANDSFREE（**H**ands-free **A**utomated **N**otification & **D**elegation **S**
     "use_tls": true,
     "username": "your-email@qq.com",
     "password": "your-smtp-auth-code",
-    "from_name": "HANDSFREE 五维中枢"
+    "from_name": "财神上下左右"
   },
   "voice_call": {
     "stepone_api_key": "sk-xxx",
@@ -116,7 +116,7 @@ python intent_parser.py "向上汇报给张总项目第一阶段已完成" --dis
 
 ---
 
-## 五维方向
+## 方向体系
 
 ### ↑ UP — 上报（Report）
 
@@ -365,7 +365,7 @@ handsfree/
 │   ├── config.json             # 配置文件（SMTP + LLM + Voice）
 │   └── contacts.json           # 联系人模板
 ├── references/
-│   ├── five_dimensions.md      # 五维方向语义规范
+│   ├── five_dimensions.md      # 方向语义规范
 │   └── examples.md             # 测试用例集
 └── scripts/
     ├── intent_parser.py        # 意图解析引擎
@@ -406,4 +406,4 @@ handsfree/
 
 ---
 
-**HANDSFREE 五维中枢** — 动嘴不动手，语音驱动人机协同。
+**财神上下左右** — 动嘴不动手，语音驱动人机协同。
