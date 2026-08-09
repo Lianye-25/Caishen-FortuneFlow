@@ -5,7 +5,7 @@
     "use_tls": true,
     "username": "your-email@qq.com",
     "password": "your-smtp-auth-code",
-    "from_name": "HANDSFREE 五维中枢"
+    "from_name": "财神上下左右"
   },
   "voice_call": {
     "stepone_api_key": "sk-xxx",

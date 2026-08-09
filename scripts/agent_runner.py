@@ -1,5 +1,5 @@
 """
-HANDSFREE 五维中枢 — Agent 执行引擎
+财神上下左右 — Agent 执行引擎
 
 动态生成 System Prompt，通过 DeepSeek API 执行 Agent 任务。
 纯标准库实现（urllib + json），后台线程异步执行。
@@ -142,7 +142,7 @@ def run_agent_async(
 def main():
     import argparse
 
-    parser = argparse.ArgumentParser(description="HANDSFREE Agent 执行器")
+    parser = argparse.ArgumentParser(description="财神 Agent 执行器")
     parser.add_argument("--task-id", required=True)
     parser.add_argument("--target-name", required=True)
     parser.add_argument("--content", default="")

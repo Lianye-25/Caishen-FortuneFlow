@@ -1,5 +1,5 @@
 """
-HANDSFREE 五维中枢 — 消息分发引擎
+财神上下左右 — 消息分发引擎
 
 用法：
     from dispatcher import dispatch
@@ -340,7 +340,7 @@ def _send_email(
     use_tls = config.get("use_tls", True)
     username = config.get("username", "")
     password = config.get("password", "")
-    from_name = config.get("from_name", "HANDSFREE 五维中枢")
+    from_name = config.get("from_name", "财神上下左右")
 
     subject, body_html = _render_email(to_name, direction, content)
 
@@ -367,10 +367,10 @@ def _render_email(to_name: str, direction: str, content: Optional[str]) -> tuple
     now_str = datetime.now(CN_TZ).strftime("%Y年%m月%d日 %H:%M")
 
     if direction == "UP":
-        subject = f"【HANDSFREE 汇报】{content_text[:30]}"
+        subject = f"【财神 汇报】{content_text[:30]}"
         body_html = f"""\
 <html><body>
-<h2>HANDSFREE 五维中枢 — 汇报</h2>
+<h2>财神上下左右 — 汇报</h2>
 <p><strong>{to_name}，您好：</strong></p>
 <p>以下为汇报内容：</p>
 <blockquote style="background:#f5f5f5;padding:12px;border-left:4px solid #4A90D9;">
@@ -378,13 +378,13 @@ def _render_email(to_name: str, direction: str, content: Optional[str]) -> tuple
 </blockquote>
 <p style="color:#888;font-size:12px;">发送时间：{now_str}</p>
 <hr>
-<p style="color:#aaa;font-size:11px;">此邮件由 HANDSFREE 五维中枢自动发送</p>
+<p style="color:#aaa;font-size:11px;">此邮件由 财神上下左右自动发送</p>
 </body></html>"""
     else:
-        subject = f"【HANDSFREE 任务委派】{content_text[:30]}"
+        subject = f"【财神 任务委派】{content_text[:30]}"
         body_html = f"""\
 <html><body>
-<h2>HANDSFREE 五维中枢 — 任务委派</h2>
+<h2>财神上下左右 — 任务委派</h2>
 <p><strong>{to_name}，您好：</strong></p>
 <p>请您处理以下任务：</p>
 <blockquote style="background:#f5f5f5;padding:12px;border-left:4px solid #E8A838;">
@@ -392,7 +392,7 @@ def _render_email(to_name: str, direction: str, content: Optional[str]) -> tuple
 </blockquote>
 <p style="color:#888;font-size:12px;">委派时间：{now_str}</p>
 <hr>
-<p style="color:#aaa;font-size:11px;">此邮件由 HANDSFREE 五维中枢自动发送</p>
+<p style="color:#aaa;font-size:11px;">此邮件由 财神上下左右自动发送</p>
 </body></html>"""
 
     return subject, body_html
@@ -441,7 +441,7 @@ def _send_wechat_message(
         "msgtype": "textcard",
         "agentid": agent_id,
         "textcard": {
-            "title": f"{dir_label} — HANDSFREE",
+            "title": f"{dir_label} — 财神",
             "description": desc,
             "url": "",
             "btntxt": "",
@@ -472,7 +472,7 @@ def main():
         except AttributeError:
             pass
 
-    parser = argparse.ArgumentParser(description="HANDSFREE 五维中枢 — 消息分发引擎")
+    parser = argparse.ArgumentParser(description="财神上下左右 — 消息分发引擎")
     parser.add_argument("--intent", required=True, help="意图解析结果 JSON 文件路径（或 JSON 字符串）")
     parser.add_argument("--contacts", default=None, help="contacts.json 路径")
     parser.add_argument("--config", default=None, help="config.json 路径")

@@ -1,5 +1,5 @@
 """
-HANDSFREE 五维中枢 — 任务状态查询 CLI
+财神上下左右 — 任务状态查询 CLI
 
 供小智/OpenClaw 轮询任务状态使用。
 
@@ -34,7 +34,7 @@ from task_manager import (
 
 
 def main():
-    parser = argparse.ArgumentParser(description="HANDSFREE 任务状态查询")
+    parser = argparse.ArgumentParser(description="财神 任务状态查询")
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument("--pending", action="store_true", help="查询待处理任务")
     group.add_argument("--running", action="store_true", help="查询执行中任务")

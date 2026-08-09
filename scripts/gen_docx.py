@@ -1,4 +1,4 @@
-"""生成 HANDSFREE 五维中枢使用说明 Word 文档。"""
+"""生成 财神上下左右使用说明 Word 文档。"""
 import os
 from docx import Document
 from docx.shared import Inches, Pt, Cm, RGBColor
@@ -83,7 +83,7 @@ def main():
         section.right_margin = Cm(2.5)
 
     # ===== 封面标题 =====
-    title = doc.add_heading('HANDSFREE 五维中枢', level=0)
+    title = doc.add_heading('财神上下左右', level=0)
     title.alignment = WD_ALIGN_PARAGRAPH.CENTER
     subtitle = doc.add_paragraph()
     subtitle.alignment = WD_ALIGN_PARAGRAPH.CENTER
@@ -116,7 +116,7 @@ def main():
 
     # ===== 系统概述 =====
     add_heading(doc, '系统概述', level=1)
-    add_para(doc, 'HANDSFREE 五维中枢将语音指令分为五个方向：')
+    add_para(doc, '财神上下左右将语音指令分为五个方向：')
     add_para(doc, '↑ UP（上报）—— 向上级汇报，自动发邮件')
     add_para(doc, '↓ DOWN（委派）—— 向下属分派任务，自动发邮件')
     add_para(doc, '← LEFT（存档）—— 归档已完成任务')

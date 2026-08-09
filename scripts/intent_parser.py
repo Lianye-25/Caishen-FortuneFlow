@@ -1,5 +1,5 @@
 """
-HANDSFREE 五维中枢 — 意图解析引擎
+财神上下左右 — 意图解析引擎
 
 用法：
     python intent_parser.py "向上汇报给张总今天的项目进展"
@@ -732,7 +732,7 @@ def route(text: str, contacts: dict, llm_call=None) -> dict:
 
 def main():
     parser = argparse.ArgumentParser(
-        description="HANDSFREE 五维中枢 — 意图解析引擎"
+        description="财神上下左右 — 意图解析引擎"
     )
     parser.add_argument("text", nargs="?", help="待解析的中文语音文本")
     parser.add_argument(
