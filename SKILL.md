@@ -128,7 +128,23 @@ description: 当用户通过小智语音通道输入中文自然语言指令时�
 - 用户回复「添加」「开启」「需要」「好」等肯定表述 → 追问 API Key → 写入 `voice_call.stepone_api_key`
 - 用户回复「跳过」「不用」「暂不需要」等 → 不修改 `voice_call` 配置，`stepone_api_key` 保持占位符值，电话功能不可用
 
-### 步骤 6：引导联系人设置
+### 步骤 6：引导配置（可选 — 任务反馈接收）
+
+检查 `config.json` 中 `inbound.email` 段。如果 `enabled` 为 `false`，向用户明确提供选择：
+
+> 是否开启**任务反馈接收**？
+> 开启后，下属完成任务回复邮件时，系统会自动检测并通知你——委派出去的任务，结果自动回到你手里。
+>
+> 此功能通过 IMAP 监听你的邮箱（通常与发件邮箱共用同一账号和授权码）。
+>
+> 请选择：
+> - **添加** → 引导填写 IMAP 服务器信息
+> - **跳过** → 暂不开启，后续需要时手动编辑 config.json
+
+- 用户回复「添加」「开启」「需要」「好」等 → 询问 IMAP 服务器/端口（QQ 邮箱为 imap.qq.com:993；账号和授权码复用 `email.username` 和 `email.password`）→ 写入 `config.json` 的 `inbound.email` 段，`enabled` 设为 `true`
+- 用户回复「跳过」「不用」「暂不需要」等 → 保持 `enabled: false`，不修改其他字段
+
+### 步骤 7：引导联系人设置
 
 必填配置全部完成后，向用户说：
 
@@ -143,7 +159,7 @@ description: 当用户通过小智语音通道输入中文自然语言指令时�
 
 `agents` 列表（代码审查Agent、文档润色Agent）是通用功能Agent，**无需替换**，保留即可。用户在使用中可通过语音动态创建新 Agent。
 
-### 步骤 7：完成确认
+### 步骤 8：完成确认
 
 全部设置完成后，向用户说：
 
@@ -158,7 +174,7 @@ description: 当用户通过小智语音通道输入中文自然语言指令时�
 
 ### 已配置检测规则
 
-如果步骤1中所有占位符字段已填入真实值（非占位符），则跳过步骤2-5。但仍需检查 `contacts.json` 中 `superiors`/`subordinates` 是否仍为示例数据（包含"张总""李经理""小明"等示例姓名）——如果仍是示例数据，执行步骤6提示用户替换。
+如果步骤1中所有占位符字段已填入真实值（非占位符），则跳过步骤2-6。但仍需检查 `contacts.json` 中 `superiors`/`subordinates` 是否仍为示例数据（包含"张总""李经理""小明"等示例姓名）——如果仍是示例数据，执行步骤7提示用户替换。
 
 如果全部已配置且联系人已替换为非示例数据，则不执行任何设置流程，直接进入意图解析模式。
 
@@ -396,3 +412,4 @@ python scripts/dispatcher.py --intent result.json
 - `scripts/task_manager.py` — 任务状态管理
 - `scripts/agent_runner.py` — AI Agent 执行引擎
 - `scripts/task_status.py` — 任务状态查询 CLI
+- `scripts/inbound.py` — 任务反馈接收引擎（邮件/企微/电话）

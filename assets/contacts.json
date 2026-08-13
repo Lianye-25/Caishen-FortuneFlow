@@ -52,6 +52,13 @@
       "wechat_userid": "xiaolian"
     }
   ],
+  "self": {
+    "name": "我",
+    "channels": ["email", "wechat"],
+    "address": "your-email@qq.com",
+    "wechat_userid": "your_id",
+    "phone": "+8613800000000"
+  },
   "agents": [
     {
       "name": "代码审查Agent",

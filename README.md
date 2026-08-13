@@ -2,7 +2,7 @@
 
 > 语音加手势驱动的人机协同中枢
 
-财神上下左右，是一套运行在 Agent系统 + 语音机器人上的语音加手势驱动分发系统。把日常管理代入方向感——向上汇报、向下委派、向左存档、向右交给AI、居中决策。说句话，指个方向，信息自动流向该去的地方。
+财神上下左右，是一套基于语音加手势驱动的任务处理系统。把日常管理代入方向感——向上汇报、向下委派、向左存档、向右交给AI、居中决策。说句话，指个方向，信息自动流向该去的地方。
 
 ```
                     ┌──────────────┐
@@ -33,6 +33,7 @@
 | **多通道分发** | 邮件（SMTP）、企业微信（应用消息）、电话（Stepone AI） |
 | **AI Agent 执行** | 大语言模型 API 驱动，后台子进程异步执行 |
 | **电话通知** | notify（通知）/ inquiry（询问）双模式，角色模板约束 AI 行为 |
+| **任务反馈** | 下属汇报完成 → 匹配对应任务并标记完成 → 通过你配置的通道通知你 |
 | **任务管理** | 完整生命周期：创建 → 执行 → 完成 → 归档 |
 
 ---
@@ -75,6 +76,11 @@
 | 邮件 | 格式化HTML邮件，标题区分"汇报"或"任务委派"，正文包含内容和时间戳 | 正式通知、需要留痕的任务 |
 | 企业微信 | 企业微信弹出卡片消息，标题"任务委派 — 财神"，正文为任务内容 | 即时提醒、日常轻量委派 |
 | 电话 | 手机振铃，AI语音说出通知内容。通知模式说完即挂，询问模式等待回复 | 紧急通知、需要确认的事项 |
+
+**任务反馈**：下属完成任务后，向系统汇报。系统收到汇报后，自动匹配到对应任务、标记完成，并即时通知你——委派出去的任务，结果自动回到你手里。
+
+- 小王汇报「整理会议纪要」已完成 → 系统自动标记完成 → 你收到任务完成提醒
+- 你的接收通道可在系统中自由配置，与给下属配置通道的规则完全一致
 
 ### ← 存档 — 本地任务管理
 
@@ -374,7 +380,8 @@ handsfree/
     ├── xiaozhi_gesture_parser.py # 手势自然语言解析
     ├── task_manager.py         # 任务状态管理
     ├── task_status.py          # 任务状态查询 CLI
-    └── agent_runner.py         # AI Agent 执行引擎
+    ├── agent_runner.py         # AI Agent 执行引擎
+    └── inbound.py              # 任务反馈接收引擎（邮件/企微/电话）
 ```
 
 ---
@@ -393,6 +400,11 @@ handsfree/
 | `voice_call.notify_mode` | bool | 是否启用电话模板包装（默认 true） |
 | `llm.api_key` | string | DeepSeek API Key |
 | `llm.model` | string | 模型名称（默认 deepseek-chat） |
+| `inbound.email.enabled` | bool | 是否启用邮件回复接收（默认 false） |
+| `inbound.email.imap_server` | string | IMAP 服务器（QQ: imap.qq.com） |
+| `inbound.email.imap_port` | int | IMAP 端口（QQ: 993） |
+| `inbound.email.username` | string | 收件邮箱（通常与发件邮箱相同） |
+| `inbound.email.password` | string | IMAP 授权码 |
 
 ### contacts.json
 
@@ -403,6 +415,8 @@ handsfree/
 | `address` | string | 邮箱地址（邮件通道必填） |
 | `phone` | string | 电话号码（电话通道必填，+86格式） |
 | `wechat_userid` | string | 企业微信用户ID（微信通道必填） |
+
+`self` 字段配置你自己的接收通道（任务完成反馈时使用），结构同上：`channels` 指定接收方式，`address`/`phone`/`wechat_userid` 分别对应邮件/电话/企微的接收地址。
 
 ---
 

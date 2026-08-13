@@ -25,5 +25,22 @@
       "agent_id": 1000002,
       "secret": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
     }
+  },
+  "inbound": {
+    "email": {
+      "enabled": false,
+      "imap_server": "imap.qq.com",
+      "imap_port": 993,
+      "username": "your-email@qq.com",
+      "password": "your-imap-auth-code"
+    },
+    "wechat": {
+      "enabled": false,
+      "token": "",
+      "aes_key": ""
+    },
+    "phone": {
+      "enabled": false
+    }
   }
 }

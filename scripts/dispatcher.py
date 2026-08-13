@@ -181,6 +181,12 @@ def dispatch(parse_result: dict, contacts: dict, config: dict) -> dict:
     target_channels = target.get("channels", [])
     target_address = target.get("address", "")
 
+    # DOWN 方向：创建任务记录，生成 task_id 供后续下属回复匹配
+    task_id = None
+    if direction == "DOWN":
+        from task_manager import create_task
+        task_id = create_task(direction, target_name, content)
+
     if not target_channels:
         return {
             "status": "failed",
@@ -220,6 +226,7 @@ def dispatch(parse_result: dict, contacts: dict, config: dict) -> dict:
                     direction=direction,
                     content=content,
                     config=email_config,
+                    task_id=task_id,
                 )
                 results.append({"channel": "email", "status": "sent", "to": target_address})
                 channels_dispatched.append("email")
@@ -305,13 +312,16 @@ def dispatch(parse_result: dict, contacts: dict, config: dict) -> dict:
         else:
             status = "skipped"
 
-    return {
+    result = {
         "status": status,
         "channels_available": target_channels,
         "channels_dispatched": channels_dispatched,
         "channels_skipped": channels_skipped,
         "results": results,
     }
+    if task_id:
+        result["task_id"] = task_id
+    return result
 
 
 def _wrap_phone_content(content: str, voice_config: dict, call_mode: str = "notify") -> str:
@@ -333,6 +343,7 @@ def _send_email(
     direction: str,
     content: Optional[str],
     config: dict,
+    task_id: Optional[str] = None,
 ) -> None:
     """通过 SMTP 发送邮件。"""
     smtp_server = config.get("smtp_server", "smtp.qq.com")
@@ -342,7 +353,7 @@ def _send_email(
     password = config.get("password", "")
     from_name = config.get("from_name", "财神上下左右")
 
-    subject, body_html = _render_email(to_name, direction, content)
+    subject, body_html = _render_email(to_name, direction, content, task_id)
 
     msg = MIMEMultipart("alternative")
     msg["Subject"] = subject
@@ -360,8 +371,8 @@ def _send_email(
         server.quit()
 
 
-def _render_email(to_name: str, direction: str, content: Optional[str]) -> tuple[str, str]:
-    """根据方向渲染邮件主题和 HTML 正文。"""
+def _render_email(to_name: str, direction: str, content: Optional[str], task_id: Optional[str] = None) -> tuple[str, str]:
+    """根据方向渲染邮件主题和 HTML 正文。DOWN 委派时主题带 task_id 供下属回复匹配。"""
     label = DIRECTION_LABEL.get(direction, "通知")
     content_text = content if content else "（无具体内容）"
     now_str = datetime.now(CN_TZ).strftime("%Y年%m月%d日 %H:%M")
@@ -382,6 +393,8 @@ def _render_email(to_name: str, direction: str, content: Optional[str]) -> tuple
 </body></html>"""
     else:
         subject = f"【财神 任务委派】{content_text[:30]}"
+        if task_id:
+            subject = f"【财神 任务委派】{task_id} {content_text[:30]}"
         body_html = f"""\
 <html><body>
 <h2>财神上下左右 — 任务委派</h2>
@@ -396,6 +409,167 @@ def _render_email(to_name: str, direction: str, content: Optional[str]) -> tuple
 </body></html>"""
 
     return subject, body_html
+
+
+# ============================================================
+# 反馈通知：任务完成后自动通知用户（contacts.self）
+# ============================================================
+
+def send_feedback(task_info: dict, contacts: dict, config: dict) -> dict:
+    """
+    向用户（contacts.self）发送任务完成反馈通知。
+    复用现有邮件/企微/电话通道，接收方为 self 配置的通道。
+
+    Args:
+        task_info: 任务字典（来自 task_manager）
+        contacts: 联系人字典（需包含 self 字段）
+        config: config.json 内容
+
+    Returns:
+        分发结果字典
+    """
+    self_contact = contacts.get("self")
+    if not self_contact:
+        return {"status": "skipped", "reason": "contacts.json 中未配置 self"}
+
+    self_channels = self_contact.get("channels", [])
+    if not self_channels:
+        return {"status": "skipped", "reason": "self 未配置接收通道"}
+
+    target_name = task_info.get("target_name", "未知")
+    content = task_info.get("content", "") or ""
+    direction = task_info.get("direction", "")
+
+    dir_label = {"UP": "汇报", "DOWN": "委派", "RIGHT": "Agent执行"}.get(direction, "任务")
+    feedback_content = f"{target_name}已完成{dir_label}「{content}」"
+
+    results = []
+    channels_dispatched = []
+
+    for channel in self_channels:
+        if channel == "email":
+            email_config = config.get("email", {})
+            self_address = self_contact.get("address", "")
+            if not email_config.get("username") or not self_address:
+                results.append({"channel": "email", "status": "skipped", "reason": "邮箱未配置"})
+                continue
+            try:
+                _send_feedback_email(self_address, feedback_content, target_name, email_config)
+                results.append({"channel": "email", "status": "sent", "to": self_address})
+                channels_dispatched.append("email")
+            except Exception as e:
+                results.append({"channel": "email", "status": "failed", "error": str(e)})
+
+        elif channel == "wechat":
+            wechat_config = config.get("channels", {}).get("wechat", {})
+            self_userid = self_contact.get("wechat_userid", "")
+            if not wechat_config.get("enabled") or not self_userid:
+                results.append({"channel": "wechat", "status": "skipped", "reason": "企微未配置"})
+                continue
+            try:
+                token = _get_wechat_access_token(
+                    wechat_config.get("corp_id", ""), wechat_config.get("secret", "")
+                )
+                if not token:
+                    results.append({"channel": "wechat", "status": "failed", "reason": "获取 access_token 失败"})
+                    continue
+                _send_wechat_feedback(token, wechat_config.get("agent_id"), self_userid, feedback_content)
+                results.append({"channel": "wechat", "status": "sent", "to": self_userid})
+                channels_dispatched.append("wechat")
+            except Exception as e:
+                results.append({"channel": "wechat", "status": "failed", "error": str(e)})
+
+        elif channel == "phone":
+            voice_config = config.get("voice_call", {})
+            self_phone = self_contact.get("phone", "")
+            if not voice_config.get("stepone_api_key") or not self_phone:
+                results.append({"channel": "phone", "status": "skipped", "reason": "电话未配置"})
+                continue
+            try:
+                import subprocess
+                env = os.environ.copy()
+                env["STEPONEAI_API_KEY"] = voice_config["stepone_api_key"]
+                call_content = _wrap_phone_content(
+                    f"任务完成通知：{feedback_content}", voice_config, "notify"
+                )
+                subprocess.run(
+                    ["stepone-call", self_phone, call_content],
+                    capture_output=True, text=True, timeout=60, env=env
+                )
+                results.append({"channel": "phone", "status": "sent", "to": self_phone})
+                channels_dispatched.append("phone")
+            except Exception as e:
+                results.append({"channel": "phone", "status": "failed", "error": str(e)})
+
+    status = "success" if channels_dispatched else "skipped"
+    return {
+        "status": status,
+        "channels_dispatched": channels_dispatched,
+        "results": results,
+        "feedback_content": feedback_content,
+    }
+
+
+def _send_feedback_email(to_address, feedback_content, target_name, config):
+    """发送任务完成反馈邮件给用户。"""
+    smtp_server = config.get("smtp_server", "smtp.qq.com")
+    smtp_port = config.get("smtp_port", 587)
+    use_tls = config.get("use_tls", True)
+    username = config.get("username", "")
+    password = config.get("password", "")
+    from_name = config.get("from_name", "财神上下左右")
+
+    now_str = datetime.now(CN_TZ).strftime("%Y年%m月%d日 %H:%M")
+    subject = f"【财神 任务完成】{target_name}"
+
+    body_html = f"""\
+<html><body>
+<h2>财神上下左右 — 任务完成通知</h2>
+<p><strong>您好：</strong></p>
+<p>{feedback_content}</p>
+<blockquote style="background:#f5f5f5;padding:12px;border-left:4px solid #4CAF50;">
+完成时间：{now_str}
+</blockquote>
+<hr>
+<p style="color:#aaa;font-size:11px;">此通知由 财神上下左右自动发送</p>
+</body></html>"""
+
+    msg = MIMEMultipart("alternative")
+    msg["Subject"] = subject
+    msg["From"] = f"{from_name} <{username}>"
+    msg["To"] = f"{to_address}"
+    msg.attach(MIMEText(body_html, "html", "utf-8"))
+
+    server = smtplib.SMTP(smtp_server, smtp_port, timeout=30)
+    try:
+        if use_tls:
+            server.starttls()
+        server.login(username, password)
+        server.sendmail(username, to_address, msg.as_string())
+    finally:
+        server.quit()
+
+
+def _send_wechat_feedback(token, agent_id, to_user, feedback_content):
+    """发送任务完成反馈到企业微信。"""
+    body = {
+        "touser": to_user,
+        "msgtype": "textcard",
+        "agentid": agent_id,
+        "textcard": {
+            "title": "任务完成 — 财神",
+            "description": feedback_content[:500],
+            "url": "",
+            "btntxt": "",
+        },
+    }
+    url = f"https://qyapi.weixin.qq.com/cgi-bin/message/send?access_token={token}"
+    data = json.dumps(body, ensure_ascii=False).encode("utf-8")
+    req = urllib.request.Request(url, data=data, headers={"Content-Type": "application/json"})
+    with urllib.request.urlopen(req, timeout=10) as resp:
+        result = json.loads(resp.read().decode("utf-8"))
+    if result.get("errcode") != 0:
+        raise RuntimeError(result.get("errmsg", "企业微信发送失败"))
 
 
 # ============================================================
